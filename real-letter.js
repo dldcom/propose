@@ -43,7 +43,6 @@ const bouquetPage = document.querySelector("#bouquetPage");
 const confessionPage = document.querySelector("#confessionPage");
 const letterPage = document.querySelector("#letterPage");
 const startButton = document.querySelector("#startButton");
-const cloudWipe = document.querySelector("#cloudWipe");
 const assetStage = document.querySelector("#assetStage");
 const textStage = document.querySelector("#textStage");
 const petals = document.querySelector("#petals");
@@ -61,8 +60,11 @@ let typingToken = 0;
 let autoAdvanceTimer = null;
 let letterFadeTimer = null;
 const audioFadeFrames = new Map();
-const instantPreview = new URLSearchParams(location.search).get("instant") === "1";
+const queryParams = new URLSearchParams(location.search);
+const instantPreview = queryParams.get("instant") === "1";
+const videoMode = queryParams.get("video") === "1";
 if (instantPreview) document.documentElement.classList.add("instant-preview");
+if (videoMode) document.documentElement.classList.add("video-mode");
 if (Number(new URLSearchParams(location.search).get("page")) > 1) document.documentElement.classList.add("direct-preview");
 
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -327,6 +329,11 @@ async function renderLetterPage() {
   if (currentPage !== scheduledPage || scheduledPage !== 27) return;
   activatePage(letterPage);
   startLetterMusic();
+  if (videoMode) {
+    window.setTimeout(() => {
+      document.documentElement.dataset.videoDone = "true";
+    }, 10000);
+  }
 }
 
 function pageDuration(pageNumber) {
@@ -378,18 +385,30 @@ function renderPage(pageNumber) {
   }
 }
 
-startButton.addEventListener("click", async () => {
+let storyStarted = false;
+
+async function beginStory() {
+  if (storyStarted) return;
+  storyStarted = true;
   startButton.disabled = true;
   setupMusicButton.classList.add("is-started");
   fullscreenButton.classList.add("is-hidden");
   preloadPage(2);
   startBackgroundMusic();
-  cloudWipe.classList.add("is-running");
+  introPage.classList.add("is-fading-out");
   await wait(530);
   renderPage(2);
-  await wait(640);
-  cloudWipe.classList.remove("is-running");
-});
+}
+
+startButton.addEventListener("click", beginStory);
+
+if (videoMode) {
+  setupMusicButton.classList.add("is-started");
+  fullscreenButton.classList.add("is-hidden");
+  const scheduleVideoStart = () => window.setTimeout(beginStory, 5000);
+  if (document.readyState === "complete") scheduleVideoStart();
+  else window.addEventListener("load", scheduleVideoStart, { once: true });
+}
 
 setupMusicButton.addEventListener("click", startIntroMusic);
 fullscreenButton.addEventListener("click", toggleFullscreen);
