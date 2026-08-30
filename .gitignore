@@ -1,0 +1,17 @@
+# This repository is a deployment bundle. Ignore local source material and
+# preview/browser artifacts by default, then allow only the live site files.
+/*
+!/.gitignore
+!/.nojekyll
+!/index.html
+!/real-letter.html
+!/real-letter.css
+!/real-letter.js
+!/real-story-layout.js
+!/assets_real_web/
+!/assets_real_web/**
+!/assets_real/
+/assets_real/*
+!/assets_real/nala_subrada-minimal-piano-music-filled-with-subtle-emotion-447744.mp3
+!/assets_real/romantic-emotions.mp3
+!/assets_real/good_b_music-piano-moment-9835.mp3

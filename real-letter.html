@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#17145f" />
+    <title>내가 할 얘기가 있는데</title>
+    <link rel="stylesheet" href="./real-letter.css" />
+  </head>
+  <body>
+    <main class="app" id="app">
+      <audio id="introMusic" src="./assets_real/nala_subrada-minimal-piano-music-filled-with-subtle-emotion-447744.mp3" preload="auto" loop></audio>
+      <audio id="backgroundMusic" src="./assets_real/romantic-emotions.mp3" preload="auto"></audio>
+      <audio id="letterMusic" src="./assets_real/good_b_music-piano-moment-9835.mp3" preload="auto"></audio>
+      <button class="setup-music-button" id="setupMusicButton" type="button">♪ BGM 시작</button>
+      <button class="fullscreen-button" id="fullscreenButton" type="button" aria-label="전체화면으로 보기">⛶ 전체화면</button>
+      <div class="ambient-stars" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <div class="story-canvas" id="storyCanvas">
+        <section class="page page-intro is-active" id="introPage" aria-label="이야기 시작">
+          <img class="intro-character" src="./assets_real_web/몬치치.webp" alt="정장을 입은 몬치치 인형" />
+          <button class="thought-bubble" id="startButton" type="button" aria-label="이야기 시작하기">
+            <strong>Dear 혜린</strong>
+            <small>click</small>
+          </button>
+        </section>
+
+        <section class="page page-story" id="storyPage" aria-live="polite">
+          <div class="asset-stage" id="assetStage"></div>
+          <div class="text-stage" id="textStage"></div>
+          <div class="petals" id="petals" aria-hidden="true"></div>
+        </section>
+
+        <section class="page page-bouquet" id="bouquetPage" aria-label="꽃다발 장면">
+          <div class="bouquet" id="bouquet"></div>
+          <div class="text-stage bouquet-text" id="bouquetText"></div>
+        </section>
+
+        <section class="page page-confession" id="confessionPage" aria-label="마음을 전하는 장면">
+          <img class="confession-character" src="./assets_real_web/몬치치.webp" alt="용기를 내는 몬치치 인형" />
+          <p class="confession-line" id="confessionLine"></p>
+        </section>
+
+        <section class="page page-letter-reading" id="letterPage" aria-label="마음을 직접 전하는 장면">
+          <p class="final-letter-message">그래서 내 마음을 말하려고 해.</p>
+        </section>
+
+        <div class="cloud-wipe" id="cloudWipe" aria-hidden="true"></div>
+      </div>
+
+      <div class="rotate-notice" aria-hidden="true">
+        <span class="phone-icon">▯</span>
+        <strong>휴대폰을 가로로 돌려봐</strong>
+        <small>사진 배치를 가장 예쁘게 볼 수 있어.</small>
+      </div>
+    </main>
+
+    <script src="./real-story-layout.js"></script>
+    <script src="./real-letter.js"></script>
+  </body>
+</html>
