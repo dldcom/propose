@@ -145,17 +145,17 @@ function startBackgroundMusic() {
   backgroundMusic.volume = 0;
   backgroundMusic.play().then(() => fadeAudioTo(backgroundMusic, 0.35, 4140)).catch(() => {});
   letterMusic.volume = 0;
-  letterMusic.currentTime = 35;
+  letterMusic.currentTime = 0;
   letterMusic.play().then(() => {
     letterMusic.pause();
-    letterMusic.currentTime = 35;
+    letterMusic.currentTime = 0;
   }).catch(() => {});
 }
 
 function startLetterMusic() {
   window.clearTimeout(letterFadeTimer);
   fadeAudioTo(backgroundMusic, 0, 5170, true);
-  letterMusic.currentTime = 35;
+  letterMusic.currentTime = 0;
   letterMusic.volume = 0;
   letterMusic.play().then(() => {
     fadeAudioTo(letterMusic, 0.35, 5000);
