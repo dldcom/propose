@@ -165,6 +165,7 @@ function startLetterMusic() {
 
 function activatePage(element) {
   pages.forEach((page) => page.classList.toggle("is-active", page === element));
+  app.classList.toggle("is-letter-reading", element === letterPage);
 }
 
 async function typeText(element, text, duration = 3200) {

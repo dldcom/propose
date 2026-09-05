@@ -61,6 +61,15 @@ button { color: inherit; font: inherit; }
 }
 
 .app.is-light-reveal::before { opacity: 1; }
+
+.app.is-letter-reading {
+  background: #000;
+}
+
+.app.is-letter-reading::before,
+.app.is-letter-reading::after {
+  display: none;
+}
 .app::after {
   position: absolute;
   z-index: 100;
