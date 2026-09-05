@@ -24,8 +24,8 @@ const PAGE_TEXT = {
   24: [{ text: "너가 웃으면", x: 35, y: 32, w: 30, size: 4.05 }],
   25: [{ text: "내 세상까지 환해지는 것 같거든", x: 15, y: 12, w: 68, size: 3.65 }],
   26: [
-    { text: "나는 그 웃음을 앞으로도 오래", x: 18, y: 6, w: 64, size: 3.55, duration: 1350 },
-    { text: "아니 평생 곁에서 보고싶어.", x: 18, y: 17, w: 64, size: 3.55, duration: 1350 }
+    { text: "나는 그 웃음을 앞으로도 오래", x: 18, y: 6, w: 64, size: 3.55, duration: 2400 },
+    { text: "아니 평생 곁에서 보고싶어.", x: 18, y: 17, w: 64, size: 3.55, duration: 2400 }
   ]
 };
 const BOUQUET_MEMORIES = [
@@ -60,6 +60,7 @@ let typingToken = 0;
 let autoAdvanceTimer = null;
 let letterFadeTimer = null;
 const audioFadeFrames = new Map();
+const imagePreloads = new Map();
 const queryParams = new URLSearchParams(location.search);
 const instantPreview = queryParams.get("instant") === "1";
 const videoMode = queryParams.get("video") === "1";
@@ -71,11 +72,13 @@ const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 const MUSIC_BPM = 58;
 const MUSIC_BEAT = 60 / MUSIC_BPM;
-const MUSIC_PAGE_STEP = MUSIC_BEAT * 4;
+const MUSIC_PAGE_BEATS = 5;
+const MUSIC_PAGE_STEP = MUSIC_BEAT * MUSIC_PAGE_BEATS;
+const SCENE_SWITCH_DELAY = 1300;
 const FINAL_PAGE_WAIT = 6;
-// The stage swaps its assets 240 ms after a page cue. 2.31 + .24 lands
-// on the track's strong half-time pulse at about 2.55 seconds.
-const MUSIC_FIRST_CUE = 2.31;
+// The stage now fully fades out before its contents are replaced. 1.25 + 1.3 keeps the
+// first visual arrival near the track's strong half-time pulse at 2.55 s.
+const MUSIC_FIRST_CUE = 1.25;
 const MUSIC_PAGE_CUES = (() => {
   const cues = {};
   let cue = MUSIC_FIRST_CUE;
@@ -151,7 +154,7 @@ function startBackgroundMusic() {
 
 function startLetterMusic() {
   window.clearTimeout(letterFadeTimer);
-  fadeAudioTo(backgroundMusic, 0, 4140, true);
+  fadeAudioTo(backgroundMusic, 0, 5170, true);
   letterMusic.currentTime = 35;
   letterMusic.volume = 0;
   letterMusic.play().then(() => {
@@ -164,7 +167,7 @@ function activatePage(element) {
   pages.forEach((page) => page.classList.toggle("is-active", page === element));
 }
 
-async function typeText(element, text, duration = 2050) {
+async function typeText(element, text, duration = 3200) {
   element.classList.remove("is-complete");
   element.textContent = text;
   void element.offsetWidth;
@@ -180,7 +183,7 @@ function makeTextBlock(block) {
   element.style.setProperty("--tw", `${block.w}%`);
   element.style.setProperty("--align", block.align || "center");
   element.style.setProperty("--ts", `${block.size || 3.5}vw`);
-  element.style.setProperty("--text-fade-duration", `${block.duration || 2050}ms`);
+  element.style.setProperty("--text-fade-duration", `${block.duration || 3200}ms`);
   return element;
 }
 
@@ -189,7 +192,7 @@ async function renderTextBlocks(container, blocks) {
   for (const block of blocks) {
     const element = makeTextBlock(block);
     container.append(element);
-    await typeText(element, block.text, block.duration || 2050);
+    await typeText(element, block.text, block.duration || 3200);
     element.classList.add("is-complete");
   }
 }
@@ -212,7 +215,9 @@ function createSceneAsset(asset, index) {
   wrapper.style.setProperty("--drift-duration", `${4.8 + (index % 5) * .65}s`);
   image.src = `./assets_real_web/${asset.src}`;
   image.alt = "함께한 추억 사진";
-  image.decoding = "sync";
+  // Synchronous decoding can pause the main thread while many transparent
+  // cutouts are inserted, which makes real-time video capture miss frames.
+  image.decoding = "async";
   image.loading = "eager";
   motion.className = "asset-motion";
   motion.append(image);
@@ -231,34 +236,51 @@ function renderPetals() {
   }
 }
 
+function preloadImage(source) {
+  const existing = imagePreloads.get(source);
+  if (existing) return existing;
+  const image = new Image();
+  image.decoding = "async";
+  image.loading = "eager";
+  image.src = `./assets_real_web/${source}`;
+  const promise = typeof image.decode === "function"
+    ? image.decode().catch(() => {})
+    : new Promise((resolve) => {
+        if (image.complete) resolve();
+        else image.addEventListener("load", resolve, { once: true });
+        image.addEventListener("error", resolve, { once: true });
+      });
+  imagePreloads.set(source, promise);
+  return promise;
+}
+
 function preloadPage(pageNumber) {
   const layout = window.REAL_STORY_LAYOUT?.[String(pageNumber)] || [];
   if (pageNumber >= 2 && pageNumber <= 26) {
-    layout.forEach((asset) => {
-      const image = new Image();
-      image.src = `./assets_real_web/${asset.src}`;
-    });
-    return;
+    return Promise.all(layout.map((asset) => preloadImage(asset.src)));
   }
   if (pageNumber === 16) {
-    ["꽃다발아래.webp", "꽃다발위.webp", ...Array.from({ length: 10 }, (_, index) => `페이지14_${index + 1}.webp`)]
-      .forEach((source) => {
-        const image = new Image();
-        image.src = `./assets_real_web/${source}`;
-      });
+    const sources = ["꽃다발아래.webp", "꽃다발위.webp", ...Array.from({ length: 10 }, (_, index) => `페이지14_${index + 1}.webp`)];
+    return Promise.all(sources.map(preloadImage));
   }
+  return Promise.resolve();
 }
 
 async function renderStoryPage(pageNumber) {
   const token = typingToken;
+  const assetsReady = preloadPage(pageNumber);
   activatePage(storyPage);
   assetStage.classList.add("is-switching");
-  textStage.replaceChildren();
+  textStage.classList.add("is-switching");
   petals.replaceChildren();
-  await wait(instantPreview ? 0 : 240);
+  await Promise.all([
+    wait(instantPreview ? 0 : SCENE_SWITCH_DELAY),
+    assetsReady
+  ]);
   if (token !== typingToken) return;
 
   assetStage.replaceChildren();
+  textStage.replaceChildren();
   const layout = window.REAL_STORY_LAYOUT?.[String(pageNumber)] || [];
   let bouquetMemoryGroup = null;
   layout.forEach((asset, index) => {
@@ -279,6 +301,7 @@ async function renderStoryPage(pageNumber) {
   }
   assetStage.classList.remove("is-switching");
   preloadPage(pageNumber + 1);
+  textStage.classList.remove("is-switching");
   await renderTextBlocks(textStage, PAGE_TEXT[pageNumber]);
   if (token === typingToken) {
     scheduleAutoAdvance(pageNumber);
@@ -318,14 +341,14 @@ async function renderBouquetPage() {
 async function renderConfessionPage() {
   activatePage(confessionPage);
   confessionLine.classList.add("is-typing");
-  await typeText(confessionLine, "그래서 오늘 내 마음을 전해보려고 해", 2050);
+  await typeText(confessionLine, "그래서 오늘 내 마음을 전해보려고 해", 3200);
   confessionLine.classList.remove("is-typing");
   scheduleAutoAdvance(5200);
 }
 
 async function renderLetterPage() {
   const scheduledPage = currentPage;
-  await wait(instantPreview ? 0 : 240);
+  await wait(instantPreview ? 0 : 620);
   if (currentPage !== scheduledPage || scheduledPage !== 27) return;
   activatePage(letterPage);
   startLetterMusic();
