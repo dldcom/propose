@@ -70,15 +70,18 @@ if (Number(new URLSearchParams(location.search).get("page")) > 1) document.docum
 
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-const MUSIC_BPM = 58;
+// The downloaded History track has a strong ~140 BPM subdivision.  Story cues use
+// the half-time pulse (~70 BPM), so seven beats land just over six seconds apart.
+const MUSIC_BPM = 69.84;
 const MUSIC_BEAT = 60 / MUSIC_BPM;
-const MUSIC_PAGE_BEATS = 5;
+const MUSIC_PAGE_BEATS = 7;
 const MUSIC_PAGE_STEP = MUSIC_BEAT * MUSIC_PAGE_BEATS;
 const SCENE_SWITCH_DELAY = 1300;
 const FINAL_PAGE_WAIT = 6;
-// The stage now fully fades out before its contents are replaced. 1.25 + 1.3 keeps the
-// first visual arrival near the track's strong half-time pulse at 2.55 s.
-const MUSIC_FIRST_CUE = 1.25;
+// Cue timing is anchored to the first prominent onset; each following story page advances
+// on a seven-beat half-time interval (~6.014 s).
+// First prominent onset measured in the downloaded track (about 3.11 s).
+const MUSIC_FIRST_CUE = 3.11;
 const MUSIC_PAGE_CUES = (() => {
   const cues = {};
   let cue = MUSIC_FIRST_CUE;
@@ -141,7 +144,8 @@ function updateFullscreenButton() {
 
 function startBackgroundMusic() {
   fadeAudioTo(introMusic, 0, 2500, true);
-  backgroundMusic.currentTime = Math.max(0, MUSIC_FIRST_CUE - 0.53);
+  // Start early enough that page 2 arrives on the track's first strong cue.
+  backgroundMusic.currentTime = Math.max(0, MUSIC_FIRST_CUE - SCENE_SWITCH_DELAY / 1000 - 0.53);
   backgroundMusic.volume = 0;
   backgroundMusic.play().then(() => fadeAudioTo(backgroundMusic, 0.35, 4140)).catch(() => {});
   letterMusic.volume = 0;
