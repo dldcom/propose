@@ -72,7 +72,7 @@ const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 const MUSIC_BPM = 58;
 const MUSIC_BEAT = 60 / MUSIC_BPM;
-const MUSIC_PAGE_BEATS = 5;
+const MUSIC_PAGE_BEATS = 6;
 const MUSIC_PAGE_STEP = MUSIC_BEAT * MUSIC_PAGE_BEATS;
 const SCENE_SWITCH_DELAY = 1300;
 const FINAL_PAGE_WAIT = 6;
